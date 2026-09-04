@@ -30,6 +30,10 @@ def load_config() -> dict:
         cfg["planning_chat_id"] = int(env("CHAT_PLANNING_ID"))
     if env("CHAT_MORNING_ID"):
         cfg["morning_chat_id"] = int(env("CHAT_MORNING_ID"))
+    if env("PLANNING_TOPIC_ID"):
+        cfg["planning_topic_id"] = int(env("PLANNING_TOPIC_ID"))
+    if env("MORNING_TOPIC_ID"):
+        cfg["morning_topic_id"] = int(env("MORNING_TOPIC_ID"))
     return cfg
 
 
@@ -168,14 +172,29 @@ class TelegramBot:
             raise RuntimeError(data.get("description", "Telegram API error"))
         return data
 
-    def send_html(self, chat_id: int, text: str) -> None:
-        self.call("sendMessage", chat_id=chat_id, text=text, parse_mode="HTML")
+    def send_html(self, chat_id: int, text: str, topic_id: int | None = None) -> None:
+        payload: dict = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
+        if topic_id:
+            payload["message_thread_id"] = topic_id
+        self.call("sendMessage", **payload)
 
-    def send_plain(self, chat_id: int, text: str) -> None:
-        self.call("sendMessage", chat_id=chat_id, text=text)
+    def send_plain(self, chat_id: int, text: str, topic_id: int | None = None) -> None:
+        payload: dict = {"chat_id": chat_id, "text": text}
+        if topic_id:
+            payload["message_thread_id"] = topic_id
+        self.call("sendMessage", **payload)
+
+    def reply(self, msg: dict, text: str, html_mode: bool = False) -> None:
+        chat_id = msg["chat"]["id"]
+        topic = msg.get("message_thread_id")
+        if html_mode:
+            self.send_html(chat_id, text, topic)
+        else:
+            self.send_plain(chat_id, text, topic)
 
     def send_evening_plan(self) -> str:
         chat_id = self.config.get("planning_chat_id")
+        topic_id = self.config.get("planning_topic_id")
         if not chat_id:
             return "planning chat not set"
         tomorrow = datetime.now(self.tz).date() + timedelta(days=1)
@@ -184,15 +203,17 @@ class TelegramBot:
             return f"already sent plan for {tomorrow}"
         try:
             plan = get_plan(self.sheet_id, self.sheet_gid, tomorrow)
-            self.send_plain(chat_id, build_plain_plan(plan))
+            self.send_plain(chat_id, build_plain_plan(plan), topic_id)
             mark_sent(key)
-            return f"sent plan for {plan['date']} to {chat_id}"
+            where = f"{chat_id}" + (f" topic {topic_id}" if topic_id else "")
+            return f"sent plan for {plan['date']} to {where}"
         except Exception as exc:
             clear_sent(key)
             raise exc
 
     def send_morning_greeting(self) -> str:
         chat_id = self.config.get("morning_chat_id")
+        topic_id = self.config.get("morning_topic_id")
         if not chat_id:
             return "morning chat not set"
         now = datetime.now(self.tz)
@@ -202,9 +223,10 @@ class TelegramBot:
         if already_sent(key):
             return f"already sent morning for {now.date()}"
         try:
-            self.send_plain(chat_id, MORNING_TEXT)
+            self.send_plain(chat_id, MORNING_TEXT, topic_id)
             mark_sent(key)
-            return f"sent morning to {chat_id}"
+            where = f"{chat_id}" + (f" topic {topic_id}" if topic_id else "")
+            return f"sent morning to {where}"
         except Exception as exc:
             clear_sent(key)
             raise exc
@@ -219,21 +241,35 @@ class TelegramBot:
         sender = msg.get("from", {})
 
         if cmd == "/start":
-            self.send_html(chat_id, (
-                "Бот планирования (облако).\n/plan /tomorrow /planplain\n"
-                "/bind /setplanning /setmorning /chatid\n"
-                f"chat id: <code>{chat_id}</code>"
-            ))
+            self.reply(msg, (
+                "Бот планирования.\n/plan /tomorrow /planplain\n"
+                "/bind /setplanning /setmorning /chatid\n\n"
+                "Подтемы: зайдите в нужную тему и напишите /setplanning или /setmorning"
+            ), html_mode=True)
         elif cmd == "/chatid":
-            self.send_html(chat_id, f"chat id: <code>{chat_id}</code>")
+            topic = msg.get("message_thread_id")
+            extra = f"\ntopic id: <code>{topic}</code>" if topic else ""
+            self.reply(msg, f"chat id: <code>{chat_id}</code>{extra}", html_mode=True)
         elif cmd == "/setplanning":
             self.config["planning_chat_id"] = chat_id
+            topic = msg.get("message_thread_id")
+            if topic:
+                self.config["planning_topic_id"] = topic
+            elif "planning_topic_id" in self.config:
+                del self.config["planning_topic_id"]
             save_config(self.config)
-            self.send_plain(chat_id, f"Чат планирования: {chat_id}")
+            note = f" (подтема {topic})" if topic else " (общий чат, без подтемы)"
+            self.reply(msg, f"Планирование: chat {chat_id}{note}")
         elif cmd == "/setmorning":
             self.config["morning_chat_id"] = chat_id
+            topic = msg.get("message_thread_id")
+            if topic:
+                self.config["morning_topic_id"] = topic
+            elif "morning_topic_id" in self.config:
+                del self.config["morning_topic_id"]
             save_config(self.config)
-            self.send_plain(chat_id, f"Чат утра: {chat_id}")
+            note = f" (подтема {topic})" if topic else " (общий чат, без подтемы)"
+            self.reply(msg, f"Утреннее сообщение: chat {chat_id}{note}")
         elif cmd == "/bind" and arg:
             surname = arg.split()[0]
             self.users[surname.lower()] = {
@@ -242,14 +278,22 @@ class TelegramBot:
                 "first_name": sender.get("first_name") or "",
             }
             save_users(self.users)
-            self.send_html(chat_id, f"Готово: <b>{html.escape(surname)}</b>")
+            self.reply(msg, f"Готово: <b>{html.escape(surname)}</b>", html_mode=True)
         elif cmd in ("/plan", "/today"):
-            self.send_html(chat_id, build_tagged_message(get_plan(self.sheet_id, self.sheet_gid, date.today()), self.users))
+            self.reply(
+                msg,
+                build_tagged_message(get_plan(self.sheet_id, self.sheet_gid, date.today()), self.users),
+                html_mode=True,
+            )
         elif cmd == "/tomorrow":
-            self.send_html(
-                chat_id,
-                build_tagged_message(get_plan(self.sheet_id, self.sheet_gid, date.today() + timedelta(days=1)), self.users),
+            self.reply(
+                msg,
+                build_tagged_message(
+                    get_plan(self.sheet_id, self.sheet_gid, date.today() + timedelta(days=1)),
+                    self.users,
+                ),
+                html_mode=True,
             )
         elif cmd == "/planplain":
             target = date.today() + timedelta(days=1) if not arg else datetime.strptime(arg, "%d.%m.%Y").date()
-            self.send_plain(chat_id, build_plain_plan(get_plan(self.sheet_id, self.sheet_gid, target)))
+            self.reply(msg, build_plain_plan(get_plan(self.sheet_id, self.sheet_gid, target)))
