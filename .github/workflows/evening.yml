@@ -22,3 +22,5 @@ jobs:
           TIMEZONE: Asia/Novokuznetsk
           CHAT_PLANNING_ID: ${{ secrets.CHAT_PLANNING_ID }}
           CHAT_MORNING_ID: ${{ secrets.CHAT_MORNING_ID }}
+          PLANNING_TOPIC_ID: ${{ secrets.PLANNING_TOPIC_ID }}
+          MORNING_TOPIC_ID: ${{ secrets.MORNING_TOPIC_ID }}

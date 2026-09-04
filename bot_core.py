@@ -19,7 +19,19 @@ MORNING_TEXT = "Всем доброе утро, господа!\nХорошег�
 
 
 def env(key: str, default: str = "") -> str:
-    return os.environ.get(key, default).strip()
+    val = os.environ.get(key)
+    if val is not None and str(val).strip():
+        return str(val).strip()
+    path = ROOT / ".env"
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, v = line.split("=", 1)
+            if k.strip() == key:
+                return v.strip()
+    return default
 
 
 def load_config() -> dict:
@@ -236,15 +248,23 @@ class TelegramBot:
         if not text.startswith("/"):
             return
         chat_id = msg["chat"]["id"]
-        cmd = text.split()[0].split("@")[0].lower()
+        cmd_raw = text.split()[0]
+        cmd = cmd_raw.split("@")[0].lower()
+        bot_name = env("BOT_USERNAME", "Vafikk_bot")
+        if "@" in cmd_raw and not cmd_raw.lower().endswith(f"@{bot_name.lower()}"):
+            return
         arg = text.split(maxsplit=1)[1].strip() if " " in text else ""
         sender = msg.get("from", {})
+        topic = msg.get("message_thread_id")
+        print(f"cmd {cmd} chat={chat_id} topic={topic}", flush=True)
 
         if cmd == "/start":
             self.reply(msg, (
                 "Бот планирования.\n/plan /tomorrow /planplain\n"
                 "/bind /setplanning /setmorning /chatid\n\n"
-                "Подтемы: зайдите в нужную тему и напишите /setplanning или /setmorning"
+                "Подтемы: зайдите в нужную тему и напишите:\n"
+                f"/setplanning@{bot_name}\n/setmorning@{bot_name}\n\n"
+                "В группе обязательно с @именем бота!"
             ), html_mode=True)
         elif cmd == "/chatid":
             topic = msg.get("message_thread_id")

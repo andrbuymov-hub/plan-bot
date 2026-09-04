@@ -1,0 +1,21 @@
+name = "plan-bot"
+main = "worker-cloud.js"
+compatibility_date = "2024-01-01"
+workers_dev = true
+
+# Cron на free CF недоступен — расписание через GitHub Actions или cron-job.org
+# [triggers]
+# crons = ["0 11 * * *", "0 2 * * 1-5"]
+
+[[kv_namespaces]]
+binding = "CONFIG_KV"
+id = "2c53cb3b798b4b92b24ddd981136f98b"
+
+[vars]
+SHEET_ID = "1v1ckAB5VTzs2KpAgcJyPDg10c1u5INYo04Y-98j2FhA"
+SHEET_GID = "1120480242"
+TIMEZONE = "Asia/Novokuznetsk"
+CHAT_PLANNING_ID = "-1002909461166"
+CHAT_MORNING_ID = "-1002909461166"
+PLANNING_TOPIC_ID = "9081"
+CRON_SECRET = "plan-bot-cron-secret-change-me"

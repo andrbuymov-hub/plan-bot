@@ -20,5 +20,7 @@ services:
         value: "-1002909461166"
       - key: CHAT_MORNING_ID
         value: "-1002909461166"
+      - key: PLANNING_TOPIC_ID
+        value: "9081"
       - key: PYTHON_VERSION
         value: "3.12.0"

@@ -1,3 +1,6 @@
+# Облако: GitHub Actions (расписание) + опционально Render (webhook).
+# Локально: TELEGRAM_API_URL указывает на plan-bot-proxy worker.
+
 name = "plan-bot-proxy"
 main = "cloudflare-worker.js"
 compatibility_date = "2024-01-01"
