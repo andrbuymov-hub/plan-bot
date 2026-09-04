@@ -1,0 +1,24 @@
+name: Morning greeting
+
+on:
+  schedule:
+    - cron: "0 2 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install httpx
+      - run: python run_cron.py morning
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          SHEET_ID: 1v1ckAB5VTzs2KpAgcJyPDg10c1u5INYo04Y-98j2FhA
+          SHEET_GID: "1120480242"
+          TIMEZONE: Asia/Novokuznetsk
+          CHAT_PLANNING_ID: ${{ secrets.CHAT_PLANNING_ID }}
+          CHAT_MORNING_ID: ${{ secrets.CHAT_MORNING_ID }}
