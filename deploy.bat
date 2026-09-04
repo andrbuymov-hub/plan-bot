@@ -20,14 +20,19 @@ echo.
 echo [2/4] Создание репозитория и push...
 gh repo create plan-bot --public --source=. --remote=origin --push
 if errorlevel 1 (
-  echo Если repo уже есть: git remote add origin https://github.com/ВАШ_ЛОГИН/plan-bot.git
-  echo git push -u origin master
-  pause
+  echo Если repo уже есть — push вручную: git push -u origin master
 )
 
 echo.
-echo [3/4] Секреты GitHub (расписание 18:00 и 9:00)...
-gh secret set BOT_TOKEN --body "8682630427:AAGa4b1bQigM7QZN33EG2x4oR_09uzvrZh8"
+echo [3/4] Секреты GitHub из .env ...
+for /f "usebackq tokens=1,* delims==" %%a in (".env") do (
+  if "%%a"=="BOT_TOKEN" set BOT_TOKEN=%%b
+)
+if not defined BOT_TOKEN (
+  echo BOT_TOKEN не найден в .env
+  pause & exit /b 1
+)
+gh secret set BOT_TOKEN --body "%BOT_TOKEN%"
 gh secret set CHAT_PLANNING_ID --body "-1002909461166"
 gh secret set CHAT_MORNING_ID --body "-1002909461166"
 
@@ -35,10 +40,10 @@ echo.
 echo [4/4] Render.com:
 echo   1. https://dashboard.render.com/ -^> New -^> Blueprint
 echo   2. Подключите GitHub repo plan-bot
-echo   3. Укажите BOT_TOKEN при деплое
-echo   4. После деплоя бот сам настроит webhook
+echo   3. При деплое укажите BOT_TOKEN из .env
 echo.
-echo GitHub Actions отправляет план в 18:00 и утро в 9:00 без ПК.
-echo Render принимает команды /plan когда ПК выключен.
+echo Готово:
+echo   - GitHub Actions: план в 18:00, утро в 9:00 (без ПК)
+echo   - Render: команды /plan когда ПК выключен
 echo.
 pause
