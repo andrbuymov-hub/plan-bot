@@ -1,0 +1,5 @@
+# Defaults for cloud (override via Render env vars)
+{
+  "planning_chat_id": -1002909461166,
+  "morning_chat_id": -1002909461166
+}

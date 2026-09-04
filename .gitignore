@@ -1,0 +1,8 @@
+.env
+users.json
+sent_log.json
+bot_session*
+*.session
+__pycache__/
+*.pyc
+test_sess*

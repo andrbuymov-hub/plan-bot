@@ -1,0 +1,6 @@
+name = "plan-bot-proxy"
+main = "cloudflare-worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+BOT_SECRET = "plan-bot-secret-change-me"

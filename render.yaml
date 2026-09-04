@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: plan-bot
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -c "from app import setup_webhook; setup_webhook()" && gunicorn --bind 0.0.0.0:$PORT --workers 1 app:app
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: CRON_SECRET
+        generateValue: true
+      - key: SHEET_ID
+        value: 1v1ckAB5VTzs2KpAgcJyPDg10c1u5INYo04Y-98j2FhA
+      - key: SHEET_GID
+        value: "1120480242"
+      - key: TIMEZONE
+        value: Asia/Novokuznetsk
+      - key: CHAT_PLANNING_ID
+        value: "-1002909461166"
+      - key: CHAT_MORNING_ID
+        value: "-1002909461166"
+      - key: PYTHON_VERSION
+        value: "3.12.0"
