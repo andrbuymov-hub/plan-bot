@@ -11,6 +11,14 @@ workers_dev = true
 binding = "CONFIG_KV"
 id = "2c53cb3b798b4b92b24ddd981136f98b"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "plan-bot-memory"
+database_id = "PLACEHOLDER_AFTER_CREATE"
+
+[ai]
+binding = "AI"
+
 [vars]
 SHEET_ID = "1v1ckAB5VTzs2KpAgcJyPDg10c1u5INYo04Y-98j2FhA"
 SHEET_GID = "1120480242"
@@ -19,3 +27,5 @@ CHAT_PLANNING_ID = "-1002909461166"
 CHAT_MORNING_ID = "-1002909461166"
 PLANNING_TOPIC_ID = "9081"
 CRON_SECRET = "plan-bot-cron-secret-change-me"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+BOT_USERNAME = "Vafikk_bot"
