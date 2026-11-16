@@ -171,7 +171,9 @@ class TelegramBot:
         if secret := env("BOT_SECRET"):
             headers["X-Bot-Secret"] = secret
         self.api_base = api_base
-        self.client = httpx.Client(timeout=60, headers=headers)
+        # trust_env=False: игнорировать системные HTTP_PROXY/ALL_PROXY (мёртвый
+        # локальный SOCKS-прокси ронял httpx с ImportError про socksio)
+        self.client = httpx.Client(timeout=60, headers=headers, trust_env=False)
         self.config = load_config()
         self.users = load_users()
 

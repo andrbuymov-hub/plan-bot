@@ -1,0 +1,17 @@
+name: Set webhook
+
+# Прописывает webhook бота на Cloudflare-воркер plan-bot,
+# чтобы команды (/chatid, /planplain, /setplanning...) работали 24/7 без ПК.
+# Повторный запуск — безвреден (setWebhook идемпотентен).
+on:
+  workflow_dispatch:
+
+jobs:
+  set:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          resp=$(curl -sS -X POST "https://api.telegram.org/bot${{ secrets.BOT_TOKEN }}/setWebhook" \
+            -d url="https://plan-bot.cooing-system.workers.dev/webhook/${{ secrets.BOT_TOKEN }}" \
+            -d drop_pending_updates=true)
+          echo "$resp" | grep -q '"ok":true' && echo "webhook set OK" || { echo "$resp"; exit 1; }
