@@ -125,9 +125,11 @@ function displayName(from) {
 }
 
 async function aiRun(env, messages, maxTokens) {
-  const model = env.AI_MODEL || "@cf/meta/llama-3.1-8b-instruct";
+  const model = env.AI_MODEL || "@cf/meta/llama-3.1-8b-instruct-fp8";
   const res = await env.AI.run(model, { messages, max_tokens: maxTokens });
-  return ((res && res.response) || "").trim();
+  // разные модели отдают ответ в разных форматах
+  const text = (res && (res.response || (res.choices && res.choices[0] && res.choices[0].message && res.choices[0].message.content))) || "";
+  return String(text).trim();
 }
 
 async function saveMessage(env, msg) {

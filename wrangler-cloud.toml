@@ -14,7 +14,7 @@ id = "2c53cb3b798b4b92b24ddd981136f98b"
 [[d1_databases]]
 binding = "DB"
 database_name = "plan-bot-memory"
-database_id = "PLACEHOLDER_AFTER_CREATE"
+database_id = "65e966ba-f50b-488d-8d75-4b6c0b921972"
 
 [ai]
 binding = "AI"
@@ -27,5 +27,5 @@ CHAT_PLANNING_ID = "-1002909461166"
 CHAT_MORNING_ID = "-1002909461166"
 PLANNING_TOPIC_ID = "9081"
 CRON_SECRET = "plan-bot-cron-secret-change-me"
-AI_MODEL = "@cf/meta/llama-3.1-8b-instruct"
+AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8"
 BOT_USERNAME = "Vafikk_bot"
